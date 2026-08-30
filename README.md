@@ -1,5 +1,7 @@
 # luci-app-mtk-easymesh
 
+> 不确定稳定性，连能不能跑都不知道。暂时无暇更新，慎用！
+
 LuCI 界面，用于在 OpenWrt / ImmortalWrt（MediaTek MT7981 / MT7986 + mtwifi 闭源驱动）上控制 MTK EasyMesh（MAP / wapp / bs20）。
 
 ## 功能

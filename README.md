@@ -21,6 +21,7 @@ LuCI 界面，用于在 OpenWrt / ImmortalWrt（MediaTek MT7981 / MT7986 + mtwif
 默认界面为英文。`po/templates/mtk-easymesh.pot` 为翻译模板，后续添加
 `po/zh_Hans/mtk-easymesh.po` 后，构建系统会自动生成
 `luci-i18n-mtk-easymesh-zh-cn` 汉化包，安装即可切换中文。
+我的i18n中文仓库：https://github.com/yyyyy114514/luci-app-mtk-easymesh-i18n-zhcn （还未测试）
 
 ## 依赖
 

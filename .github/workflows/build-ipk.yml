@@ -153,6 +153,7 @@ jobs:
 
             - 版本: ${{ github.event.inputs.build_version }}
             - SDK: ImmortalWrt ${{ github.event.inputs.sdk_version }} (mediatek/filogic)
+            - 依赖: mtwifi-cfg mtwifi-wapp lua-cjson（需编译mt789x mtwifi闭源固件时添加）
 
             安装:
             ```

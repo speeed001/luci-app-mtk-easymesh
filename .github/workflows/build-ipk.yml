@@ -95,8 +95,12 @@ jobs:
 
       - name: Copy app into SDK
         run: |
+          # 缓存的 sdk/ 里带有上次复制的旧包, 必须先删掉, 否则 cp -R 会嵌套成 .../app/
+          rm -rf sdk/package/luci-app-mtk-easymesh
           cp -R "$GITHUB_WORKSPACE/app" sdk/package/luci-app-mtk-easymesh
           rm -rf sdk/package/luci-app-mtk-easymesh/.git
+          test -f sdk/package/luci-app-mtk-easymesh/Makefile
+          test -f sdk/package/luci-app-mtk-easymesh/htdocs/luci-static/resources/view/easymesh/about.js
 
       - name: Stamp package version into About view
         working-directory: sdk/package/luci-app-mtk-easymesh
@@ -115,6 +119,9 @@ jobs:
       - name: Enable app and build ipk
         working-directory: sdk
         run: |
+          # 清掉缓存 sdk 里上次编译的旧 ipk, 避免把过期产物发到 artifact / release
+          rm -f sdk/bin/packages/*/luci-app-mtk-easymesh*.ipk
+          rm -f sdk/ipk.log
           # SDK 默认带全套 packages; 显式启用本包(依赖 lua-cjson 在 packages feed 中)
           echo "CONFIG_PACKAGE_luci-app-mtk-easymesh=y" >> .config
           make defconfig

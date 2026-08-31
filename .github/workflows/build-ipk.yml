@@ -43,7 +43,7 @@ jobs:
       - name: Download & extract SDK
         run: |
           VER="${{ github.event.inputs.sdk_version }}"
-          URL="https://mirror.zju.edu.cn/immortalwrt/releases/$VER/targets/mediatek/filogic/immortalwrt-sdk-$VER-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
+          URL="https://mirrors.vsean.net/immortalwrt/releases/$VER/targets/mediatek/filogic/immortalwrt-sdk-$VER-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
           echo "SDK_URL=$URL"
           wget -q -O sdk.tar.zst "$URL"
           mkdir -p sdk

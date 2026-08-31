@@ -1,0 +1,92 @@
+name: Build luci-app-mtk-easymesh ipk (SDK)
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk_version:
+        description: "ImmortalWrt SDK 版本 (iloop: 24.10.1/24.10.4)"
+        required: false
+        default: "24.10.4"
+        type: string
+
+concurrency:
+  group: build-ipk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipk:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          path: app
+          fetch-depth: 1
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+          df -h
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gcc-multilib g++-multilib zstd libzstd-dev \
+            binutils bzip2 cpio curl file flex bison gawk gettext git \
+            libncurses-dev libssl-dev libtool libxml-parser-perl make \
+            python3 python3-setuptools python3-pyelftools python3-pip \
+            qemu-utils rsync scons subversion swig time unzip wget xsltproc
+
+      # ===== ImmortalWrt SDK: 工具链已预编译, 单编 luci JS 包只需几分钟 =====
+      - name: Download & extract SDK
+        run: |
+          VER="${{ github.event.inputs.sdk_version }}"
+          URL="https://mirror.zju.edu.cn/immortalwrt/releases/$VER/targets/mediatek/filogic/immortalwrt-sdk-$VER-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
+          echo "SDK_URL=$URL"
+          wget -q -O sdk.tar.zst "$URL"
+          mkdir -p sdk
+          tar -C sdk --strip-components=1 -xaf sdk.tar.zst
+          ls sdk | head
+
+      - name: Update luci feed (提供 luci.mk / luci-base)
+        working-directory: sdk
+        run: |
+          ls feeds/luci/luci.mk >/dev/null 2>&1 || ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Copy app into SDK
+        run: |
+          cp -R "$GITHUB_WORKSPACE/app" sdk/package/luci-app-mtk-easymesh
+          rm -rf sdk/package/luci-app-mtk-easymesh/.git
+
+      - name: Slim DEPENDS for SDK build (mtwifi-cfg/wapp 是目标固件私有, SDK 无此定义)
+        working-directory: sdk/package/luci-app-mtk-easymesh
+        run: |
+          sed -i 's/LUCI_DEPENDS:=+mtwifi-cfg +mtwifi-wapp +lua-cjson/LUCI_DEPENDS:=+lua-cjson/' Makefile
+          sed -i 's#https://github.com/yyyyy114514#https://github.com/openwrt#g' Makefile || true
+          grep LUCI_DEPENDS Makefile
+
+      - name: Enable app and build ipk
+        working-directory: sdk
+        run: |
+          # SDK 默认带全套 packages; 显式启用本包(依赖 lua-cjson 在 packages feed 中)
+          echo "CONFIG_PACKAGE_luci-app-mtk-easymesh=y" >> .config
+          make defconfig
+          grep -nE "luci-app-mtk-easymesh|lua-cjson" .config | head
+          make package/luci-app-mtk-easymesh/compile -j$(nproc) V=s > ipk.log 2>&1 \
+            || { echo "=== COMPILE FAILED (tail 200) ==="; tail -200 ipk.log; echo "--- grep errors ---"; grep -iE "error|No such file|cannot" ipk.log | tail -40; exit 1; }
+          echo "=== ipk files ==="
+          find bin/packages -name 'luci-app-mtk-easymesh_*.ipk' -exec ls -l {} \;
+
+      - name: Upload ipk artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: luci-app-mtk-easymesh-ipk
+          path: |
+            sdk/bin/packages/**/luci-app-mtk-easymesh_*.ipk
+            sdk/ipk.log
+          if-no-files-found: warn
+          retention-days: 30

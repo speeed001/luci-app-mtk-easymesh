@@ -10,7 +10,28 @@ msgstr ""
 msgid "-- auto --"
 msgstr ""
 
+msgid "(恩山论坛)"
+msgstr ""
+
 msgid "AL Interface"
+msgstr ""
+
+msgid "About"
+msgstr ""
+
+msgid "Developer"
+msgstr ""
+
+msgid "Enshan (right.com.cn) Profile"
+msgstr ""
+
+msgid "GitHub Repository"
+msgstr ""
+
+msgid "MTK EasyMesh (MAP / wapp / bs20) configuration for the luci-app-mtk-easymesh package."
+msgstr ""
+
+msgid "Version"
 msgstr ""
 
 msgid "AL MAC"

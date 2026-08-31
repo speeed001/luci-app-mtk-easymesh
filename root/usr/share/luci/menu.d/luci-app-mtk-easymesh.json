@@ -22,5 +22,17 @@
 			"acl": [ "luci-app-mtk-easymesh" ],
 			"uci": { "easymesh": true }
 		}
+	},
+	"admin/network/easymesh/about": {
+		"title": "About",
+		"order": 57,
+		"action": {
+			"type": "view",
+			"path": "easymesh/about"
+		},
+		"depends": {
+			"acl": [ "luci-app-mtk-easymesh" ],
+			"uci": { "easymesh": true }
+		}
 	}
 }

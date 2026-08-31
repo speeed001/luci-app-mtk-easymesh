@@ -8,10 +8,26 @@ on:
         required: false
         default: "24.10.4"
         type: string
+      build_version:
+        description: "包版本号 (写入 About 栏)"
+        required: false
+        default: "0.2.1beta"
+        type: string
+      upload_release:
+        description: "是否上传到 GitHub Release"
+        required: false
+        default: "yes"
+        type: choice
+        options:
+          - "yes"
+          - "no"
 
 concurrency:
   group: build-ipk-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
 
 jobs:
   build-ipk:
@@ -82,6 +98,13 @@ jobs:
           cp -R "$GITHUB_WORKSPACE/app" sdk/package/luci-app-mtk-easymesh
           rm -rf sdk/package/luci-app-mtk-easymesh/.git
 
+      - name: Stamp package version into About view
+        working-directory: sdk/package/luci-app-mtk-easymesh
+        run: |
+          sed -i "s/var PKG_VERSION = '.*';/var PKG_VERSION = '${{ github.event.inputs.build_version }}';/" \
+            htdocs/luci-static/resources/view/easymesh/about.js
+          grep -n "PKG_VERSION =" htdocs/luci-static/resources/view/easymesh/about.js
+
       - name: Slim DEPENDS for SDK build (mtwifi-cfg/wapp 是目标固件私有, SDK 无此定义)
         working-directory: sdk/package/luci-app-mtk-easymesh
         run: |
@@ -111,3 +134,24 @@ jobs:
             sdk/ipk.log
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Upload ipk to GitHub Release
+        if: ${{ !cancelled() && github.event.inputs.upload_release == 'yes' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: luci-app-mtk-easymesh-${{ github.event.inputs.build_version }}
+          name: luci-app-mtk-easymesh ${{ github.event.inputs.build_version }}
+          body: |
+            ## luci-app-mtk-easymesh — MTK EasyMesh (MAP / wapp) 面板
+
+            - 版本: ${{ github.event.inputs.build_version }}
+            - SDK: ImmortalWrt ${{ github.event.inputs.sdk_version }} (mediatek/filogic)
+
+            安装:
+            ```
+            opkg install luci-app-mtk-easymesh_*.ipk
+            ```
+          files: |
+            sdk/bin/packages/**/luci-app-mtk-easymesh_*.ipk
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_unmatched_files: true

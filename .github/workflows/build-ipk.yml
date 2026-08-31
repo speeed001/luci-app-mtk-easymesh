@@ -61,6 +61,16 @@ jobs:
           tar -C sdk --strip-components=1 -xaf sdk.tar.zst
           ls sdk | head
 
+      # luci feed 内容基本不变, 缓存后免重复 git clone
+      - name: Cache luci feed
+        id: cache-feeds
+        uses: actions/cache@v4
+        with:
+          path: sdk/feeds
+          key: feeds-${{ github.event.inputs.sdk_version }}
+          restore-keys: |
+            feeds-${{ github.event.inputs.sdk_version }}
+
       - name: Update luci feed (提供 luci.mk / luci-base)
         working-directory: sdk
         run: |

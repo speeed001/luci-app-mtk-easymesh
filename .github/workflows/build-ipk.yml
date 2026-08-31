@@ -40,7 +40,18 @@ jobs:
             qemu-utils rsync scons subversion swig time unzip wget xsltproc
 
       # ===== ImmortalWrt SDK: 工具链已预编译, 单编 luci JS 包只需几分钟 =====
+      # SDK release 固定版本内容不变, 缓存解压后的 SDK, 二次触发免去重新下载 1GB+ 文件
+      - name: Cache SDK (解压后)
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: sdk
+          key: sdk-${{ github.event.inputs.sdk_version }}
+          restore-keys: |
+            sdk-${{ github.event.inputs.sdk_version }}
+
       - name: Download & extract SDK
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         run: |
           VER="${{ github.event.inputs.sdk_version }}"
           URL="https://mirrors.vsean.net/immortalwrt/releases/$VER/targets/mediatek/filogic/immortalwrt-sdk-$VER-mediatek-filogic_gcc-13.3.0_musl.Linux-x86_64.tar.zst"
